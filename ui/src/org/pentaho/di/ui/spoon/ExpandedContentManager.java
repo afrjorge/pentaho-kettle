@@ -129,6 +129,8 @@ public final class ExpandedContentManager {
       } );
     }
 
+    System.out.println( "TS ====> " + System.currentTimeMillis() );
+
     browser.setUrl( url );
     lastNavigateURL = url;
   }
