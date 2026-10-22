@@ -1,0 +1,47 @@
+PDI Karaf SSH Issue
+
+Summary of Changes
+
+The SSH regression in the 4.4.6-2026.05.12 Karaf build is caused by the upgraded Apache SSHD (from 2.9.x → 2.12.x) switching its BouncyCastle dependency from bcprov-jdk15on to bcprov-jdk18on. The existing feature processing rules only blacklisted/replaced jdk15on artifacts, so the new jdk18on bundles referenced in the SSH feature were either not resolved or conflicted at runtime.
+
+Files Modified
+
+1. maven-parent-poms/pom.xml
+Updated karaf.version from 4.4.6 → 4.4.6-2026.05.12
+Added apache-sshd.version=2.12.1 property (matching the SSHD version in the new Karaf build)
+Added bcprov-jdk18on.version=1.78.1 property (for bundle replacement range matching)
+
+2. pentaho-karaf-assembly/pom.xml
+Added apache-sshd.version and bcprov-jdk18on.version properties for resource filtering
+
+3. pentaho-karaf-assembly/assemblies/common-resources/.../org.apache.karaf.features.xml (client assemblies)
+Added jdk18on BouncyCastle bundles to the blacklist (prevents direct installation)
+Added jdk18on → jdk15to18 bundle replacements (redirects to compatible bridge artifacts)
+Added SSH feature replacement that explicitly defines the SSH feature using compatible bundles (sshd-osgi, sshd-scp, sshd-sftp at 2.12.1 + bcprov/bcpkix/bcutil-jdk15to18 at 1.78.1 + shell.ssh)
+
+4. pentaho-karaf-assembly/assemblies/server/.../org.apache.karaf.features.xml (CE server)
+Same blacklist, bundle replacement, and SSH feature replacement as above
+
+5. pentaho-karaf-ee-assembly/pom.xml
+Updated karaf.version from 4.4.6 → 4.4.6-2026.05.12
+Added apache-sshd.version, bcprov-jdk18on.version, bcprov-jdk15to18.version properties
+
+6. pentaho-karaf-ee-assembly/assemblies/server/.../org.apache.karaf.features.xml (EE server)
+Added BouncyCastle blacklist entries (both jdk15on and jdk18on)
+Added all BouncyCastle bundle replacements (jdk15on + jdk18on → jdk15to18)
+Added SSH feature replacement
+
+Root Cause
+
+The 4.4.6-2026.05.12 Karaf fork build upgraded Apache SSHD to 2.12.x (for CVE remediation), which:
+Replaced org.bouncycastle:bcprov-jdk15on with org.bouncycastle:bcprov-jdk18on
+Dropped the net.i2p.crypto:eddsa dependency (EdDSA now handled by BouncyCastle)
+Required bcutil-jdk18on in addition to bcprov and bcpkix
+
+The existing feature processing rules only handled jdk15on artifacts, leaving the new jdk18on references unresolved or conflicting.
+
+
+work mostly done using 10.2.0.2 sources, should be re-checked using snapshot (currently future 10.2.0.9)
+
+
+
