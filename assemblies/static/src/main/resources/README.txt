@@ -7,10 +7,11 @@ Installation instructions:
   OS X:
     - You can launch Spoon by navigating to the folder this "read me" file is located in and double clicking on the "Data Integration" application icon, depending on your system.
   Ubuntu 16.04 and later:
-    - The libwebkitgtk package needs to be installed.  This can be done by running "apt-get install libwebkitgtk-1.0.0"
+    - The WebKitGTK package needs to be installed.  This can be done by running "apt-get install libwebkit2gtk-4.0-37"
+    - Spoon runs on GTK3, which embeds WebKit2GTK. To fall back to GTK2, run "export SWT_GTK3=0" before launching spoon.sh. On GTK2, Spoon embeds WebKitGTK 1.0 ("apt-get install libwebkitgtk-1.0-0"), whose JavaScript engine is too old for some web-based features such as the Data Explorer Tool
     - On some installations of Ubuntu 16.04, Unity doesn't display the menu bar. In order to fix that, spoon.sh has a setting to disable this integration, "export UBUNTU_MENUPROXY=0". You can try to remove that setting if you wish to see if it works propery on your machine
   CentOS 6 Desktop:
-    - The libwebkitgtk package needs to be installed.  This can be done by running "yum install libwebkitgtk"
+    - The WebKitGTK package needs to be installed.  This can be done by running "yum install webkit2gtk3" (RHEL/CentOS 8 and later) or "yum install webkitgtk4" (CentOS 7)
 
 
 Infobright Bulk Loader:

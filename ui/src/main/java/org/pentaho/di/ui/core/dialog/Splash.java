@@ -232,7 +232,10 @@ public class Splash {
       kettleIcon.dispose();
       exclamationImage.dispose();
       verFont.dispose();
-      licFont.dispose();
+      // Created by the paint listener, which never runs if the splash is disposed before it is painted (e.g. GTK3)
+      if ( licFont != null ) {
+        licFont.dispose();
+      }
       devWarningFont.dispose();
       versionWarningForegroundColor.dispose();
       versionWarningBackgroundColor.dispose();

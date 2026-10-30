@@ -26,11 +26,14 @@ MOZILLA_FIVE_HOME=$(find /usr/lib -maxdepth 1 -name xulrunner-[0-9]* | head -1)
 LD_LIBRARY_PATH=${MOZILLA_FIVE_HOME}:${LD_LIBRARY_PATH}
 export MOZILLA_FIVE_HOME LD_LIBRARY_PATH
 
-# Fix for GTK Windows issues with SWT
-export GDK_NATIVE_WINDOWS=1
+# SWT on GTK3 embeds WebKit2GTK. On GTK2 it embeds WebKitGTK 1.0, whose JavaScript engine is too old for the
+# web content Spoon hosts (e.g. the Data Explorer Tool). Export SWT_GTK3=0 before launching to fall back to GTK2.
+export SWT_GTK3=${SWT_GTK3:-1}
 
-# Fix GTK 3 issues with SWT
-export SWT_GTK3=0
+if [ "0" = "$SWT_GTK3" ]; then
+  # Fix for GTK Windows issues with SWT (GTK2 only, GTK3 ignores it with a warning)
+  export GDK_NATIVE_WINDOWS=1
+fi
 
 # Fix overlay scrollbar bug with Ubuntu 11.04
 export LIBOVERLAY_SCROLLBAR=0
@@ -143,14 +146,23 @@ case `uname -s` in
             else
               LDCONFIG=ldconfig
             fi
-            HASWEBKITGTK=`$LDCONFIG -p | grep webkitgtk-1.0`
+            # The WebKit library SWT loads depends on the GTK version in use
+            if [ "0" = "$SWT_GTK3" ]; then
+              WEBKITGTK_LIB=libwebkitgtk-1.0.so.0
+              WEBKITGTK_PKG=libwebkitgtk-1.0-0
+              # Avoids WebKitGTK 1.0 JIT crashes (BACKLOG-22728)
+              export JavaScriptCoreUseJIT=0
+            else
+              WEBKITGTK_LIB=libwebkit2gtk-4.0.so.37
+              WEBKITGTK_PKG=libwebkit2gtk-4.0-37
+            fi
+            HASWEBKITGTK=`$LDCONFIG -p | grep $WEBKITGTK_LIB`
             export LIBWEBKITGTK="$HASWEBKITGTK"
-            export JavaScriptCoreUseJIT=0
             if [ -z "$HASWEBKITGTK" ] && [ "1" != "$SKIP_WEBKITGTK_CHECK" ]; then
               echo "#######################################################################"
-              echo "WARNING:  no libwebkitgtk-1.0 detected, some features will be unavailable"
+              echo "WARNING:  no $WEBKITGTK_LIB detected, some features will be unavailable"
               echo "    Consider installing the package with apt-get or yum."
-              echo "    e.g. 'sudo apt-get install libwebkitgtk-1.0-0'"
+              echo "    e.g. 'sudo apt-get install $WEBKITGTK_PKG'"
               echo "#######################################################################"
             fi
 
